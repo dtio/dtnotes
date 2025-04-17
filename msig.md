@@ -89,7 +89,7 @@ sgdxcun4 > mv config .kube
 
 helm repo add metallb https://metallb.github.io/metallb
 
-helm install metallb metallb/metallb --namespace metallb --create-namespace
+helm install metallb metallb/metallb --namespace metallb-system --create-namespace
 
 metallb-pool.yaml
 
@@ -98,7 +98,7 @@ metallb-pool.yaml
     kind: IPAddressPool
     metadata:
       name: cluster-pool
-      namespace: metallb
+      namespace: metallb-system
     spec:
       addresses:
       # VIP IP Address Pool
@@ -121,38 +121,31 @@ metallb-pool.yaml
     kind: L2Advertisement
     metadata:
       name: metallb-k3s
-      namespace: metallb
+      namespace: metallb-system
     spec:
       ipAddressPools:
       - cluster-pool
 
 # Install nginx ingress controller
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/baremetal/deploy.yaml
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx 
 
-nginx-lb.yaml
+helm install rancher ingress-nginx/ingress-nginx --namespace rancher-nginx-ingress --create-namespace  --set ingressClass=rancher-nginx --set controller.ingressClassResource.name=rancher-nginx
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: ingress-nginx-controller-loadbalancer
-  namespace: ingress-nginx
-spec:
-  selector:
-    app.kubernetes.io/component: controller
-    app.kubernetes.io/instance: ingress-nginx
-    app.kubernetes.io/name: ingress-nginx
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 80
-    - name: https
-      port: 443
-      protocol: TCP
-      targetPort: 443
-  type: LoadBalancer
-  loadBalancerIP: 10.138.55.32
+kubectl patch svc rancher-ingress-nginx-controller -n rancher-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.50"}}' 
+
+# Install pas ingress controller 
+
+helm install pas ingress-nginx/ingress-nginx --namespace pas-nginx-ingress --create-namespace  --set ingressClass=pas-nginx --set controller.ingressClassResource.name=pas-nginx
+
+kubectl patch svc pas-ingress-nginx-controller -n pas-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.32"}}' 
+
+# Install api ingress controller
+
+helm install api ingress-nginx/ingress-nginx --namespace api-nginx-ingress --create-namespace --set ingressClass=api-nginx --set controller.ingressClassResource.name=api-nginx 
+
+kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.34"}}' 
+
 
 # Installation of HA Proxy ingress controller
 
@@ -165,13 +158,12 @@ helm install haproxy-kubernetes-ingress haproxytech/kubernetes-ingress --create-
 helm repo add rancher-stable https://releases.rancher.com/server-charts/latest
 
 kubectl create namespace cattle-system
+
 kubectl -n cattle-system create secret generic tls-ca --from-file=cacerts.pem
-kubectl -n cattle-system create secret tls tls-rancher-ingress --cert=dxcportaluat1.pem --key=dxceportaluat1.key
 
-helm install rancher rancher-latest/rancher --namespace cattle-system --create-namespace --set hostname=dxceportaluat1.msigsap.com --set bootstrapPassword=P@ssw0rd --set replicas=1 --version=2.11.0 --set ingress.tls.source=secret --set privateCA=true
+kubectl -n cattle-system create secret tls tls-rancher-ingress --cert=rancheruat.pem --key=rancheruat.key
 
-
-
+helm install rancher rancher-latest/rancher --namespace cattle-system --create-namespace --set hostname=rancheruat.msigsap.com --set bootstrapPassword=P@ssw0rd --set replicas=1 --version=2.11.0 --set ingress.tls.source=secret --set privateCA=true --set ingress.ingressClassName=rancher-nginx
 
 # Restart rancher deployment (in case there is any error)
 
@@ -228,6 +220,7 @@ spec:
   type: LoadBalancer
   loadBalancerIP: 10.138.55.32
 
+---
 apiVersion: v1
 items:
 - apiVersion: networking.k8s.io/v1
@@ -304,3 +297,13 @@ items:
 kind: List
 metadata:
   resourceVersion: ""
+
+
+# Useful stuffs
+
+helm show values ingress-nginx/ingress-nginx
+kubectl get ingressClasses
+
+openssl x509 -in rancheruat.pem -noout -text
+openssl x509 -in rancheruat.cer -out rancheruat.pem
+
