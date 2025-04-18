@@ -17,7 +17,7 @@ Hostname: sgdxcunfs
 
 IP: 10.138.55.60
 
-share: ???
+share: /nfs
 
 # Applications
 
@@ -168,7 +168,6 @@ helm install rancher rancher-latest/rancher --namespace cattle-system --create-n
 # Restart rancher deployment (in case there is any error)
 
 kubectl rollout restart deploy/rancher -n cattle-system
-
 
 # RANDOM STUFFS
 
