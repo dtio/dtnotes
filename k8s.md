@@ -1,3 +1,11 @@
+# Jumphost
+
+RDP to 10.138.55.45
+
+Id: 10.138.55.45\transcend_admin
+
+Pwd: Welcome10*
+
 # Prereq
 
 # sysctl params required by setup, params persist across reboots
@@ -91,5 +99,88 @@ helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/cs
 
 helm install csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version 4.11.0
 
+sc-sgdxcunfs.yaml
+
+    apiVersion: v1
+    items:
+    - allowVolumeExpansion: true
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"
+        name: sc-sgdxcunfs
+      parameters:
+        server: sgdxcunfs
+        share: /nfs
+      provisioner: nfs.csi.k8s.io
+      reclaimPolicy: Retain
+      volumeBindingMode:
+
+kubectl apply -f sc-sgdxcunfs.yaml
 
 
+kubectl patch storageclass sc-sgdxcunfs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+# Setup sgdxcnpdepl
+
+kubeadm init --pod-network-cidr=172.28.0.0/16 --control-plane-endpoint "sgdxnpdepl.msigsap.com:6443"
+
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/tigera-operator.yaml
+
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/custom-resources.yaml -O
+
+You can now join any number of control-plane nodes by copying certificate authorities
+and service account keys on each node and then running the following as root:
+
+  kubeadm join sgdxnpdepl.msigsap.com:6443 --token 1e31mi.ecp3lyk6ksk3ihld \
+        --discovery-token-ca-cert-hash sha256:716cd46e1ac35d2fe47d08144c58b304e20264dd1bfc913003c830b6ea04752f \
+        --control-plane
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join sgdxnpdepl.msigsap.com:6443 --token 1e31mi.ecp3lyk6ksk3ihld \
+        --discovery-token-ca-cert-hash sha256:716cd46e1ac35d2fe47d08144c58b304e20264dd1bfc913003c830b6ea04752f
+
+# Setup Metal LB
+
+helm repo add metallb https://metallb.github.io/metallb
+
+helm install metallb metallb/metallb --namespace metallb-system --create-namespace
+
+For single node, remove the taint
+
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+metallb-pool.yaml
+
+    # Metallb address pool
+    apiVersion: metallb.io/v1beta1
+    kind: IPAddressPool
+    metadata:
+      name: cluster-pool
+      namespace: metallb-system
+    spec:
+      addresses:
+      # VIP IP Address Pool
+      - 10.138.55.50/32
+
+
+    ---
+    # L2 configuration
+    apiVersion: metallb.io/v1beta1
+    kind: L2Advertisement
+    metadata:
+      name: metallb-k3s
+      namespace: metallb-system
+    spec:
+      ipAddressPools:
+      - cluster-pool
+
+# Adding ingress controller
+
+helm install <name> ingress-nginx/ingress-nginx --namespace <name>-nginx-ingress --create-namespace  --set ingressClass=<name>-nginx --set controller.ingressClassResource.name=<name>-nginx
+
+kubectl patch svc <name>-ingress-nginx-controller -n pas-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.50"}}' 
+
+      

@@ -1,0 +1,4 @@
+- Install erpnext
+- Collect disheng PC and send to aftershock
+- Return bag to Decathlon
+- Find LED light

@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: dtmon
+      POSTGRES_PASSWORD: dtmonpass
+      POSTGRES_DB: dtmon
+    ports:
+      - "5432:5432"
+    volumes:
+      - dtmon_data:/var/lib/postgresql/data
+volumes:
+  dtmon_data:
