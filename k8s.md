@@ -30,6 +30,15 @@ sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.to
 
 systemctl restart containerd
 
+# Disable firewall
+
+sudo systemctl disable firewalld --now
+
+# Set Selinux to Permissive
+
+sudo setenforce 0
+sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
 # Disable swap
 
 swapoff -a
@@ -37,8 +46,6 @@ sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
 # Installation of K8tools
 
-sudo setenforce 0
-sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
 # This overwrites any existing configuration in /etc/yum.repos.d/kubernetes.repo
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
@@ -51,19 +58,27 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+# Install k8s tools
+sudo dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 
+# Start kubelet service
 sudo systemctl enable --now kubelet
 
+# Initialized sgdxcumas.msigsap.com Cluster
 kubeadm init --pod-network-cidr=172.18.0.0/16 --control-plane-endpoint "sgdxcumas.msigsap.com:6443"
 
+# Create tigera-operator
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/tigera-operator.yaml
 
+# Download custom-resources 
 curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/custom-resources.yaml -O
 
 Update the correct pod_cidr value
 
+# Apply custom-resources.yaml to the cluster
 kubectl create -f custom-resources.yaml
+
+# Verify that the cluster is up and running
 
 # Joining other nodes 
 
@@ -90,6 +105,7 @@ and service account keys on each node and then running the following as root:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
+# Joining cluster from worker nodes
 kubeadm join sgdxcumas.msigsap.com:6443 --token gl3keu.hh7xasgdeyggrit9 \
         --discovery-token-ca-cert-hash sha256:aca04f5eea4f950f5f853aab998920f2ad1336f4d864c8e3bae6525dfc8d61c7
 
@@ -184,3 +200,5 @@ helm install <name> ingress-nginx/ingress-nginx --namespace <name>-nginx-ingress
 kubectl patch svc <name>-ingress-nginx-controller -n pas-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.50"}}' 
 
       
+# Verify cluster nodes 
+kubectl get nodes
