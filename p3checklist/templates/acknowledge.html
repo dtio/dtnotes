@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acknowledge Shift</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://unpkg.com/@tailwindcss/browser@latest"></script>
+</head>
+<body class="bg-gray-100 font-inter">
+    <div class="container mx-auto p-4 md:p-8 flex justify-center items-center h-screen">
+        <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+            <h1 class="text-2xl font-semibold text-gray-800 mb-2 text-center">Acknowledge Inventories</h1>
+            <p class="text-gray-600 text-left mb-3"><b>Date: </b> {{ date }}</p>
+            <p class="text-gray-600 text-left mb-3"><b>Shift: </b>{{ shift }}</p>
+            <form action="/submit_acknowledgement" method="post" class="space-y-4">
+                <input type="hidden" name="date" value="{{ date }}">
+                <input type="hidden" name="shift" value="{{ shift }}">
+                <div>
+                    <label for="name" class="block text-gray-600 text-sm font-bold mb-3">Name:</label>
+                    <input type="text" id="name" name="name" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                    Acknowledge Inventory
+                </button>
+            </form>
+            <p class="mt-4 text-gray-600 text-sm text-center">Please enter your name to acknowledge that the inventories are complete.</p>
+        </div>
+    </div>
+</body>
+</html>

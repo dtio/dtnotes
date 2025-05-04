@@ -19,8 +19,9 @@ EOF
 sudo sysctl --system
 
 # Install containerd
-
-dnf install containerd.io
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+dnf install -y containerd.io
 
 # Create containerd configuration
 
@@ -150,7 +151,9 @@ kubectl patch storageclass sc-sgdxcunfs -p '{"metadata": {"annotations":{"storag
 
 # Setup sgdxcnpdepl
 
-kubeadm init --pod-network-cidr=172.28.0.0/16 --control-plane-endpoint "sgdxnpdepl.msigsap.com:6443"
+kubeadm init --pod-network-cidr=172.28.0.0/16 --control-plane-endpoint "sgdxcnpdepl.msigsap.com:6443"
+
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/tigera-operator.yaml
 
@@ -159,14 +162,14 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/cu
 You can now join any number of control-plane nodes by copying certificate authorities
 and service account keys on each node and then running the following as root:
 
-  kubeadm join sgdxnpdepl.msigsap.com:6443 --token 1e31mi.ecp3lyk6ksk3ihld \
-        --discovery-token-ca-cert-hash sha256:716cd46e1ac35d2fe47d08144c58b304e20264dd1bfc913003c830b6ea04752f \
+  kubeadm join sgdxcnpdepl.msigsap.com:6443 --token lvwv3j.zvcdwy05g3lwcz1y \
+        --discovery-token-ca-cert-hash sha256:67aa71f7c3cc61cffc97beaa49ca39d5ef0e29d6c2039038d8ee64d715ee5fa6 \
         --control-plane
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join sgdxnpdepl.msigsap.com:6443 --token 1e31mi.ecp3lyk6ksk3ihld \
-        --discovery-token-ca-cert-hash sha256:716cd46e1ac35d2fe47d08144c58b304e20264dd1bfc913003c830b6ea04752f
+kubeadm join sgdxcnpdepl.msigsap.com:6443 --token lvwv3j.zvcdwy05g3lwcz1y \
+        --discovery-token-ca-cert-hash sha256:67aa71f7c3cc61cffc97beaa49ca39d5ef0e29d6c2039038d8ee64d715ee5fa6
 
 # Setup Metal LB
 
@@ -219,14 +222,38 @@ helm install rancher ingress-nginx/ingress-nginx --namespace rancher-nginx-ingre
 kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.34"}}' 
 kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.32"}}' 
 kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.88"}}' 
+helm install depl ingress-nginx/ingress-nginx --namespace depl-nginx-ingress --create-namespace  --set ingressClass=depl-nginx --set controller.ingressClassResource.name=depl-nginx
+
+kubectl patch svc depl-ingress-nginx-controller -n depl-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.50"}}' 
 
 # Verify ingress controllers
 
 kubectl get ingressclass
 kubectl get svc -A | grep nginx-ingress | grep LoadBalancer
       
-# Verify cluster nodes 
-kubectl get nodes
+# Local 
+
+kubeadm init --pod-network-cidr=172.28.0.0/16 --control-plane-endpoint "k8s1.dtlab.net:6443"
+
+kubeadm join k8s1.dtlab.net:6443 --token oy0coz.3zhzytz66cem6pwx \
+	--discovery-token-ca-cert-hash sha256:d9374232ae037159490d61f0c62dcd7509baa81a48ccd3f08d461fce87eacd90 
+
+
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/calico.yaml -O
+
+
+kubectl apply -f calico.yaml
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+
+chmod 700 get_helm.sh
+
+./get_helm.sh
+
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+helm install metallb metallb/metallb --namespace metallb-system --create-namespace
+
 
 # Install rancher
 
