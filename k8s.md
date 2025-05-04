@@ -84,9 +84,11 @@ kubectl create -f custom-resources.yaml
 
 To start using your cluster, you need to run the following as a regular user:
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+# Prepare kubernetes config
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 Alternatively, if you are the root user, you can run:
 
@@ -95,6 +97,8 @@ Alternatively, if you are the root user, you can run:
 You should now deploy a pod network to the cluster.
 Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
   https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+# k8s initialization output
 
 You can now join any number of control-plane nodes by copying certificate authorities
 and service account keys on each node and then running the following as root:
@@ -105,6 +109,10 @@ and service account keys on each node and then running the following as root:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
+kubeadm join sgdxcumas.msigsap.com:6443 --token gl3keu.hh7xasgdeyggrit9 \
+        --discovery-token-ca-cert-hash sha256:aca04f5eea4f950f5f853aab998920f2ad1336f4d864c8e3bae6525dfc8d61c7
+
+
 # Joining cluster from worker nodes
 kubeadm join sgdxcumas.msigsap.com:6443 --token gl3keu.hh7xasgdeyggrit9 \
         --discovery-token-ca-cert-hash sha256:aca04f5eea4f950f5f853aab998920f2ad1336f4d864c8e3bae6525dfc8d61c7
@@ -113,6 +121,7 @@ kubeadm join sgdxcumas.msigsap.com:6443 --token gl3keu.hh7xasgdeyggrit9 \
 
 helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
 
+# Install NFS CSI Driver
 helm install csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version 4.11.0
 
 sc-sgdxcunfs.yaml
@@ -133,6 +142,7 @@ sc-sgdxcunfs.yaml
       reclaimPolicy: Retain
       volumeBindingMode:
 
+# Apply CSI Driver Configuration
 kubectl apply -f sc-sgdxcunfs.yaml
 
 
@@ -162,6 +172,7 @@ kubeadm join sgdxnpdepl.msigsap.com:6443 --token 1e31mi.ecp3lyk6ksk3ihld \
 
 helm repo add metallb https://metallb.github.io/metallb
 
+# Install metallb into metallb-system
 helm install metallb metallb/metallb --namespace metallb-system --create-namespace
 
 For single node, remove the taint
@@ -193,12 +204,37 @@ metallb-pool.yaml
       ipAddressPools:
       - cluster-pool
 
-# Adding ingress controller
+# Apply metallb-pool.yaml
 
-helm install <name> ingress-nginx/ingress-nginx --namespace <name>-nginx-ingress --create-namespace  --set ingressClass=<name>-nginx --set controller.ingressClassResource.name=<name>-nginx
+kubectl apply -f metallb-pool.yaml
 
-kubectl patch svc <name>-ingress-nginx-controller -n pas-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.50"}}' 
+# Installing ingress controller
 
+helm install api ingress-nginx/ingress-nginx --namespace api-nginx-ingress --create-namespace  --set ingressClass=api-nginx --set controller.ingressClassResource.name=api-nginx
+helm install pas ingress-nginx/ingress-nginx --namespace pas-nginx-ingress --create-namespace  --set ingressClass=pas-nginx --set controller.ingressClassResource.name=pas-nginx
+helm install rancher ingress-nginx/ingress-nginx --namespace rancher-nginx-ingress --create-namespace  --set ingressClass=rancher-nginx --set controller.ingressClassResource.name=rancher-nginx
+
+# Update ingress controller ip address
+
+kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.34"}}' 
+kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.32"}}' 
+kubectl patch svc api-ingress-nginx-controller -n api-nginx-ingress -p '{"spec": {"loadBalancerIP":"10.138.55.88"}}' 
+
+# Verify ingress controllers
+
+kubectl get ingressclass
+kubectl get svc -A | grep nginx-ingress | grep LoadBalancer
       
 # Verify cluster nodes 
 kubectl get nodes
+
+# Install rancher
+
+helm install rancher rancher-latest/rancher --namespace cattle-system --create-namespace --set hostname=rancheruat.msigsap.com --set bootstrapPassword=P@ssw0rd --set replicas=1 --version=2.11.0 --set ingress.tls.source=secret --set privateCA=true --set ingress.ingressClassName=rancher-nginx
+
+# Create tls cert for rancher ingress controller
+kubectl create secret tls tls-rancher-ingress --cert=rancheruat_signed.cer --key=rancheruat.key -n cattle-system
+
+# Rancher dtio.app
+
+helm install rancher app-rancher/rancher --namespace cattle-system --create-namespace --set hostname=ranch.dtio.app --set bootstrapPassword=F055tech --set replicas=1 --version=2.11.0 --set ingress.tls.source=secret 

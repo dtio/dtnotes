@@ -178,11 +178,18 @@ MsigDxc123#
 curl -sfL https://get.k3s.io |  K3S_TOKEN=SGDXCUMASCLUSTER K3S_URL=https://sgdxcumas.msigsap.com:6443 sh -
 # Setup MetalLB
 
+# Helm installation
+
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-
 chmod 700 get_helm.sh
-
 ./get_helm.sh
+
+# Adding helm repositories
+
+helm repo add metallb https://metallb.github.io/metallb
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml 
 cp /etc/rancher/k3s/k3s.yaml .kube/config
