@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Connect to the PostgreSQL database
-PGPASSWORD=p3checkpass psql -U p3checkuser -h localhost -p 5432 -d p3checklist <<EOSQL
+PGPASSWORD=p3checkpass psql -U p3checkuser -h p3cldb.p3cl.svc.cluster.local -p 5432 -d p3checklist <<EOSQL
 
 -- Drop the table if it exists
 DROP TABLE IF EXISTS main_data;

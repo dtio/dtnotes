@@ -5,7 +5,7 @@ from models import db, MainData  # Import db and MainData
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://p3checkuser:p3checkpass@localhost/p3checklist')
+app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://p3checkuser:p3checkpass@p3cldb.p3cl.svc.cluster.local/p3checklist')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)  # Initialize the database with the app
 
