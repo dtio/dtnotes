@@ -17,14 +17,16 @@ immich:
 
 API Key: kc6YhVI9FUz901IIKHeKysEAIkPHqS0LN2LjQnK23gI 
 
-sdc - 0:3
-sdi - 0:11
-sdj - 0:12
+180.255.78.30/255.255.255.252
+180.255.78.29
 
-sdb - 0:1
-sdd - 0:4
-sde - 0:6
+61.16.95.126/255.255.255.252
+61.16.95.125
 
-sdf - 0:8
-sdg - 0:9
-sdh - 0:10
+https://kewarganegaraan.ahu.go.id/backend/login
+christio
+y2hyax47f037
+
+VEP Deregistration
+https://vepams.jpj.gov.my/ep-portal-fe/#/ep-portal-fe/login
+2025051113054084600605890

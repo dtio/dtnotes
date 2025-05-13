@@ -1,4 +1,8 @@
-collect disheng machine from aftershock
-
-
-
+- request loan report from OCBC  
+- setup HPE VME demo  
+- invoice Arcstudio   
+- create formal report for partick RCL  
+- check with OI on AWS logs to syslog-ng (logz.io) 
+- continue instana training  
+- send arcstudio desktop for troubleshooting 
+- setup instana standard edition (request for NFR)
