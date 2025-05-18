@@ -13,7 +13,7 @@
         <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-sm">
             <p class="text-gray-600 text-left mb-3"><b>Date: </b> {{ date }}</p>
             <p class="text-gray-600 text-left mb-3"><b>Shift: </b>{{ shift }}</p>
-            <p class="text-gray-600 text-left mb-3"><b>Verified by: </b>{{ acknowledger_name }}</p>
+            <p class="text-gray-600 text-left mb-3"><b>Verified by: </b>{{ acknowledge_by }}</p>
             
             <div class="mb-6 border-t pt-4">
                 <h2 class="text-xl font-semibold text-gray-700 mb-3 text-center">View Checklist</h2>
@@ -28,20 +28,25 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for group in inventory_group %}
                                 {% if group.inventories %}
-                                    <tr>
-                                        <td colspan="2" class="px-3 py-2 bg-gray-100 font-semibold text-gray-700">{{ group.groupname }}</td>
-                                    </tr>
-                                    {% for item in group.inventories %}
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700">
-                                            {{ item.name }}
-                                            {% if item.notes and item.notes.strip() and item.notes.lower() != 'no notes' %}
-                                                <span class="font-semibold text-green-600">({{ item.notes }})</span>
-                                            {% endif %}
+                                    <tr class="bg-gray-100 cursor-pointer hover:bg-gray-200" onclick="toggleGroup('group-{{ group.id }}')">
+                                        <td colspan="2" class="px-3 py-2 font-semibold text-gray-700">
+                                            <span class="group-toggle-icon" id="icon-group-{{ group.id }}">+</span> {{ group.groupname }}
                                         </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700 text-right">{{ item.current_shift_quantity }}</td>
                                     </tr>
-                                    {% endfor %}
+                                    {# Wrap items in a tbody that can be toggled. Initially hidden. #}
+                                    <tbody id="group-{{ group.id }}" class="hidden">
+                                        {% for item in group.inventories %}
+                                        <tr>
+                                            <td class="pl-6 pr-3 py-2 whitespace-nowrap text-gray-700"> {# Indent item name #}
+                                                {{ item.name }}
+                                                {% if item.notes and item.notes.strip() and item.notes.lower() != 'no notes' %}
+                                                    <span class="font-semibold text-green-600">({{ item.notes }})</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-gray-700 text-right">{{ item.current_shift_quantity }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
                                 {% endif %}
                             {% endfor %}
                         </tbody>
@@ -51,14 +56,27 @@
                 {% endif %}
             </div>
 
-            <form action="{{ url_for('acknowledge_view', date=date, shift=shift) }}" method="post" class="space-y-4">
-                <div class="flex space-x-2">
-                    <a href="{{ url_for('p3_checklist') }}" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-center">
-                        Main
-                    </a>
-                </div>
-            </form>
+            <div class="flex space-x-2 mt-4">
+                <a href="{{ url_for('p3_checklist') }}" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-center">
+                    Main
+                </a>
+            </div>
         </div>
     </div>
+<script>
+    function toggleGroup(groupId) {
+        const groupItemsBody = document.getElementById(groupId);
+        const icon = document.getElementById('icon-' + groupId);
+        if (groupItemsBody) {
+            if (groupItemsBody.classList.contains('hidden')) {
+                groupItemsBody.classList.remove('hidden');
+                if (icon) icon.textContent = '- ';
+            } else {
+                groupItemsBody.classList.add('hidden');
+                if (icon) icon.textContent = '+ ';
+            }
+        }
+    }
+</script>
 </body>
 </html>

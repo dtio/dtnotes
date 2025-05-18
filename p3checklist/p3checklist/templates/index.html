@@ -22,9 +22,9 @@
             <div class="col-6 col-md-3 col-item">{{ item.shift }}</div>
              <div class="col-6 col-md-3 col-item">
             {% if item.acknowledged %}
-                <a href="{{ url_for('acknowledge_view', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-success" role="button">View</a>
+                <a href="{{ url_for('acknowledgements.acknowledge_view', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-success" role="button">View</a>
             {% else %}
-                <a href="{{ url_for('acknowledge_fixed', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-primary" role="button">Check-In</a>
+                <a href="{{ url_for('acknowledgements.acknowledge_fixed', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-primary" role="button">Check-In</a>
             {% endif %}
             </div>
             <div class="col-6 col-md-3 col-item">

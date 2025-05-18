@@ -43,7 +43,7 @@
             </div>
 
 
-                <form action="{{ url_for('acknowledge_dental', date=date, shift=shift) }}" method="post" class="space-y-4">
+                <form action="{{ url_for('acknowledgements.acknowledge_dental', date=date, shift=shift) }}" method="post" class="space-y-4">
                 <input type="hidden" name="date" value="{{ date }}">
                 <input type="hidden" name="shift" value="{{ shift }}">
                 <div class="flex space-x-2">
