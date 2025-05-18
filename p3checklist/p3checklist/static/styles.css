@@ -1,52 +1,4 @@
-.action-button {
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-weight: 600;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 120px; /* Increased width of the button to accommodate 'Acknowledge' */
-}
-.action-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-.acknowledge {
-    background-color: #10b981; /* Green */
-}
-.acknowledge:hover {
-    background-color: #059669;
-}
-.checkin {
-    background-color: #3b82f6; /* Blue */
-}
-.checkin:hover {
-    background-color: #2563eb;
-}
-.completed {
-    background-color: #6b7280; /* Gray */
-    cursor: not-allowed;
-}
-
-/* Custom button style for a darker orange */
-.btn-dark-orange {
-    background-color: #E65100; /* A darker orange color */
-    border-color: #E65100;
-    color: white;
-}
-
-.btn-dark-orange:hover {
-    background-color: #DD4800; /* A slightly darker shade for hover */
-    border-color: #DD4800;
-    color: white;
-}
-
-    
-      /* Optional custom styles for better spacing */
+/* Optional custom styles for better spacing */
 .col-item {
     padding: 8px; /* Add some padding to the columns */
     border: 1px solid #ddd; /* Optional: Add a border for visual separation */
@@ -57,4 +9,60 @@
     font-weight: bold;
     background-color: #f0f0f0; /* Optional: style for header row */
 }
+
+.btn-marie-blue {
+    background-color: #6d8eec
+; /* A darker orange color */
+    border-color: #6d8eec;
+    color: white;
+}
+
+.btn-marie-purple {
+    background-color: #b77fd6
+; /* A darker orange color */
+    border-color: #b77fd6;
+    color: white;
+}
+
+.btn-marie-orange {
+    background-color: #ffa31d
+; /* A darker orange color */
+    border-color: #ffa31d;
+    color: white;
+}
+
+.btn-marie-red {
+    background-color: #eb5b5b;
+    border-color: #eb5b5b;
+    color: white;
+}
+
+.btn-marie-blue:hover {
+    background-color: #526be8
+; /* A darker orange color */
+    border-color: #526be8;
+    color: white;
+}
+
+.btn-marie-purple:hover {
+    background-color: #964ebf
+; /* A darker orange color */
+    border-color: #964ebf;
+    color: white;
+}
+
+.btn-marie-orange:hover {
+    background-color: #f28800;
+    border-color: #f28800;
+    color: white;
+}
+
+.btn-marie-red:hover {
+    background-color: #d33737
+; /* A darker orange color */
+    border-color: #d33737;
+    color: white;
+}
+
+
     
