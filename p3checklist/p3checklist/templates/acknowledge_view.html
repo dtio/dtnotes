@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acknowledge Shift</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://unpkg.com/@tailwindcss/browser@latest"></script>
+</head>
+<body class="bg-gray-100 font-inter">
+    <div class="container mx-auto p-4 md:p-8 flex justify-center items-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-md p-8 w-full max-w-sm">
+            <p class="text-gray-600 text-left mb-3"><b>Date: </b> {{ date }}</p>
+            <p class="text-gray-600 text-left mb-3"><b>Shift: </b>{{ shift }}</p>
+            <p class="text-gray-600 text-left mb-3"><b>Verified by: </b>{{ acknowledger_name }}</p>
+            
+            <div class="mb-6 border-t pt-4">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3 text-center">View Checklist</h2>
+                {% if inventory_group %}
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
+                                <th scope="col" class="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for group in inventory_group %}
+                                {% if group.inventories %}
+                                    <tr>
+                                        <td colspan="2" class="px-3 py-2 bg-gray-100 font-semibold text-gray-700">{{ group.groupname }}</td>
+                                    </tr>
+                                    {% for item in group.inventories %}
+                                    <tr>
+                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700">
+                                            {{ item.name }}
+                                            {% if item.notes and item.notes.strip() and item.notes.lower() != 'no notes' %}
+                                                <span class="font-semibold text-green-600">({{ item.notes }})</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700 text-right">{{ item.current_shift_quantity }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-gray-500 text-center italic">No inventory groups found or inventory data is unavailable.</p>
+                {% endif %}
+            </div>
+
+            <form action="{{ url_for('acknowledge_view', date=date, shift=shift) }}" method="post" class="space-y-4">
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('p3_checklist') }}" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-center">
+                        Main
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
