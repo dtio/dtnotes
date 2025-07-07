@@ -24,14 +24,14 @@
             {% if item.acknowledged %}
                 <a href="{{ url_for('acknowledgements.acknowledge_view', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-marie-purple" role="button">View</a>
             {% else %}
-                <a href="{{ url_for('acknowledgements.acknowledge_fixed', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-marie-blue" role="button">Check-In</a>
+                <a href="{{ url_for('acknowledgements.acknowledge_eyeent', date=item.date.strftime('%Y-%m-%d'), shift=item.shift) }}" class="btn btn-marie-blue" role="button">Check-In</a>
             {% endif %}
             </div>
             <div class="col-6 col-md-3 col-item">
             {% if item.checkin %}
                 Completed
             {% else %}
-                 <button class="btn btn-marie-orange">Check-Out</button>
+                <button class="btn btn-marie-orange">Check-Out</button>
             {% endif %}
             </div>
         </div>

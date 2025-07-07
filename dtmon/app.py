@@ -2,7 +2,6 @@ import psycopg2
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-import db  # Import the db module
 
 app = Flask(__name__)
 app.config['DATABASE_URL'] = 'postgresql://dtmon:dtmonpass@localhost:5432/dtmon'
@@ -10,10 +9,10 @@ app.secret_key = "your_super_secret_key" # Add a secret key.
 
 # Register the teardown function
 app.teardown_appcontext(db.close_db)
-
 # Register the initdb command
 app.cli.command('initdb')(db.init_db)
 
+# Initialize Flask-Migrate
 migrate = Migrate(app, db) # db is your SQLAlchemy instance
 
 @app.route('/')
