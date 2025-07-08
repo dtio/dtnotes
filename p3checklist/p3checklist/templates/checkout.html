@@ -34,6 +34,10 @@
                     </div>
                 </div>
             {% endfor %}
+            <div>
+            <button type="button" class="btn btn-primary mt-3" id="add-item-button">Add New Item</button>
+            </div>
+            <br />
             <div id="updated-by-section">
                 <label for="name" class="block text-gray-600 text-sm font-bold mb-2">Updated by (type or select):</label>
                 <input type="text" id="name" name="name" list="user-suggestions" required
@@ -45,8 +49,9 @@
                     {% endfor %}
                 </datalist>
             </div>
-            <button type="button" class="btn btn-secondary mt-3" id="add-item-button">Add New Item</button>
-            <button type="submit" class="btn btn-primary mt-3">Confirm</button>
+            <div>
+                <button type="submit" class="btn btn-primary mt-3">Confirm</button>
+            </div>
         </form>
     </div>
     <footer class="text-center py-4">
