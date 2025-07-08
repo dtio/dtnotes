@@ -47,9 +47,9 @@ class Inventory(db.Model):
     name = db.Column(String(255), nullable=False)
     notes = db.Column(Text, nullable=True)
     groupid = db.Column(Integer, ForeignKey('groups.id'), nullable=False)
-    # quantity = db.Column(Integer, nullable=False, default=0) # Removed: Quantity is now shift-specific
     location = db.Column(Text, nullable=False)
-
+    frequently_used = db.Column(Boolean, nullable=False, default=False) 
+    
     # Relationship to ShiftInventory logs
     shift_logs = db.relationship('ShiftInventory', backref='item_details', lazy='dynamic')
 

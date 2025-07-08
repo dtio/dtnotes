@@ -26,7 +26,6 @@ def acknowledge_eyeent():
         except ValueError:
             flash("Invalid date format provided.", "error")
     else:
-        print("Missing shift")
         flash("Date and Shift are required to view ENT item acknowledgements.", "warning")
         return redirect(url_for('p3_checklist'))
 
