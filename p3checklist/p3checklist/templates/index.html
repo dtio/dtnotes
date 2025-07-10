@@ -30,12 +30,14 @@
             <div class="col-6 col-md-3 col-item">
             {% if item.checkout %}
                 <button class="btn btn-secondary" disabled>Completed</button>
-            {% else %}
+            {% elif item.acknowledged %}
             <form action="{{ url_for('checkout.checkout') }}" method="POST">
                 <input type="hidden" name="shift_type" value="{{ item.shift }}">
                 <input type="hidden" name="date" value="{{ item.date.strftime('%Y-%m-%d') }}">
                 <button type="submit" class="btn btn-marie-orange">Check-Out</button>
             </form>
+            {% else %}
+                <button class="btn btn-secondary" disabled>Not Check-In</button>
             {% endif %}
             </div>
         </div>

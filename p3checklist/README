@@ -1,0 +1,5 @@
+podman build -t davidtio/p3checklist:0.4 .
+podman login docker.io
+davidtio
+sxxxxxxxx1
+podman push davidtio/p3checklist:0.4
