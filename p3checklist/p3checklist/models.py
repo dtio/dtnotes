@@ -63,6 +63,8 @@ class ShiftInventory(db.Model):
     shift_id = db.Column(Integer, ForeignKey('shift.id'), nullable=False)
     inventory_id = db.Column(Integer, ForeignKey('inventory.id'), nullable=False)
     quantity = db.Column(Integer, nullable=False)
+    returned = db.Column(Integer, default=0)  # New field
+    used = db.Column(Integer, default=0)      # New field
     shift_notes = db.Column(Text, nullable=True) # Optional notes for this item during this specific shift
 
     # Ensures one entry per item per shift

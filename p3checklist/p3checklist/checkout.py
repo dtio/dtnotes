@@ -80,16 +80,25 @@ def update_inventory():
                 inventory_id = key.split('_')[1]
                 quantity = int(value)
 
-                # Find the item in the next shift inventory
+                # Update returned/used in current shift inventory
+                current_inventory = ShiftInventory.query.filter_by(
+                    shift_id=current_shift.id, inventory_id=inventory_id
+                ).first()
+                if current_inventory:
+                    if key.startswith('return_'):
+                        current_inventory.returned = quantity
+                    elif key.startswith('used_'):
+                        current_inventory.used = quantity
+
+                # Update quantity in next shift inventory
                 next_shift_inventory = ShiftInventory.query.filter_by(
                     shift_id=next_shift_id, inventory_id=inventory_id
                 ).first()
-
                 if next_shift_inventory:
                     if key.startswith('return_'):
-                        next_shift_inventory.quantity += quantity  # Add returned quantity
+                        next_shift_inventory.quantity += quantity
                     elif key.startswith('used_'):
-                        next_shift_inventory.quantity -= quantity  # Subtract used quantity
+                        next_shift_inventory.quantity -= quantity
 
         # Handle dynamically added items
         new_item_names = request.form.getlist('new_item_name[]')
@@ -99,19 +108,21 @@ def update_inventory():
         for name, return_qty, used_qty in zip(new_item_names, new_item_returns, new_item_useds):
             inventory_item = Inventory.query.filter_by(name=name).first()
             if inventory_item:
-                # Check if the item exists in the next shift inventory
                 next_shift_inventory = ShiftInventory.query.filter_by(
                     shift_id=next_shift_id, inventory_id=inventory_item.id
                 ).first()
 
                 if next_shift_inventory:
                     next_shift_inventory.quantity += int(return_qty) - int(used_qty)
+                    next_shift_inventory.returned = int(return_qty)
+                    next_shift_inventory.used = int(used_qty)
                 else:
-                    # Create a new inventory entry for the next shift
                     new_inventory = ShiftInventory(
                         shift_id=next_shift_id,
                         inventory_id=inventory_item.id,
-                        quantity=int(return_qty) - int(used_qty)
+                        quantity=int(return_qty) - int(used_qty),
+                        returned=int(return_qty),
+                        used=int(used_qty)
                     )
                     db.session.add(new_inventory)
 

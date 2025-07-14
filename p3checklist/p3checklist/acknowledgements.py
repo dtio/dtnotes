@@ -20,32 +20,20 @@ def acknowledge_eyeent():
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
             # Find previous shift
-            if shift_str == 'AM':
-                prev_shift_date = ack_date - timedelta(days=1)
-                prev_shift_type = 'ND'
-            else:  # ND
-                prev_shift_date = ack_date
-                prev_shift_type = 'AM'
-            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+            prev_shift_obj = get_previous_shift(ack_date, shift_str)
 
             if current_shift_obj:
                 ent_items_query = Inventory.query.filter(or_(Inventory.groupid==1, Inventory.groupid==2)).order_by(Inventory.id).all() 
                 ent_inventory_with_quantities = ShiftInventory.get_inventory_with_quantities(current_shift_obj.id, ent_items_query)
 
                 # Get current shift inventory
-                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
-                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+                current_inventory_map = get_inventory_map(current_shift_obj)
 
                 # Get previous shift inventory
-                prev_inventory_map = {}
-                if prev_shift_obj:
-                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
-                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+                prev_inventory_map = get_inventory_map(prev_shift_obj)
 
                 # Calculate differences
-                for inventory_id, curr_qty in current_inventory_map.items():
-                    prev_qty = prev_inventory_map.get(inventory_id, 0)
-                    inventory_differences[inventory_id] = curr_qty - prev_qty
+                inventory_differences = calculate_inventory_differences(current_inventory_map, prev_inventory_map)
 
             else:
                 flash(f"Shift details not found for {date_str} - {shift_str}.", "warning")
@@ -74,32 +62,20 @@ def acknowledge_dental():
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
             # Find previous shift
-            if shift_str == 'AM':
-                prev_shift_date = ack_date - timedelta(days=1)
-                prev_shift_type = 'ND'
-            else:  # ND
-                prev_shift_date = ack_date
-                prev_shift_type = 'AM'
-            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+            prev_shift_obj = get_previous_shift(ack_date, shift_str)
 
             if current_shift_obj:
                 dental_items_query = Inventory.query.filter_by(groupid=3).order_by(Inventory.id).all() 
                 dental_inventory_with_quantities = ShiftInventory.get_inventory_with_quantities(current_shift_obj.id, dental_items_query)
 
                 # Get current shift inventory
-                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
-                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+                current_inventory_map = get_inventory_map(current_shift_obj)
 
                 # Get previous shift inventory
-                prev_inventory_map = {}
-                if prev_shift_obj:
-                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
-                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+                prev_inventory_map = get_inventory_map(prev_shift_obj)
 
                 # Calculate differences
-                for inventory_id, curr_qty in current_inventory_map.items():
-                    prev_qty = prev_inventory_map.get(inventory_id, 0)
-                    inventory_differences[inventory_id] = curr_qty - prev_qty
+                inventory_differences = calculate_inventory_differences(current_inventory_map, prev_inventory_map)
 
             else:
                 flash(f"Shift details not found for {date_str} - {shift_str}.", "warning")
@@ -165,13 +141,7 @@ def acknowledge_view():
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
             # Find previous shift
-            if shift_str == 'AM':
-                prev_shift_date = ack_date - timedelta(days=1)
-                prev_shift_type = 'ND'
-            else:  # ND
-                prev_shift_date = ack_date
-                prev_shift_type = 'AM'
-            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+            prev_shift_obj = get_previous_shift(ack_date, shift_str)
 
             if current_shift_obj:
                 if current_shift_obj.acknowledged_by:
@@ -180,21 +150,13 @@ def acknowledge_view():
                         acknowledger_name = user.username
 
                 # Get current shift inventory
-                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
-                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+                current_inventory_map = get_inventory_map(current_shift_obj)
 
                 # Get previous shift inventory
-                prev_inventory_map = {}
-                if prev_shift_obj:
-                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
-                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+                prev_inventory_map = get_inventory_map(prev_shift_obj)
 
                 # Calculate differences
-                for inventory_id, curr_qty in current_inventory_map.items():
-                    prev_qty = prev_inventory_map.get(inventory_id, 0)
-                    inventory_differences[inventory_id] = curr_qty - prev_qty
-
-                print(inventory_differences)
+                inventory_differences = calculate_inventory_differences(current_inventory_map, prev_inventory_map)
 
                 inventory_alias = aliased(Inventory)
                 inventory_group_query = Group.query.outerjoin(
@@ -220,3 +182,25 @@ def acknowledge_view():
                            inventory_group=inventory_group_with_quantities,
                            acknowledge_by=acknowledger_name,
                            inventory_differences=inventory_differences)
+
+def get_previous_shift(date_obj, shift_str):
+    if shift_str == 'AM':
+        prev_shift_date = date_obj - timedelta(days=1)
+        prev_shift_type = 'ND'
+    else:  # ND
+        prev_shift_date = date_obj
+        prev_shift_type = 'AM'
+    return Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+
+def get_inventory_map(shift_obj):
+    if not shift_obj:
+        return {}
+    inventory = ShiftInventory.query.filter_by(shift_id=shift_obj.id).all()
+    return {inv.inventory_id: inv.quantity for inv in inventory}
+
+def calculate_inventory_differences(current_map, previous_map):
+    differences = {}
+    for inventory_id, curr_qty in current_map.items():
+        prev_qty = previous_map.get(inventory_id, 0)
+        differences[inventory_id] = curr_qty - prev_qty
+    return differences
