@@ -32,7 +32,15 @@
                                                 <span class="font-semibold text-green-600">({{ item.notes }})</span>
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700 text-right">{{ item.current_shift_quantity }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-gray-700 text-right">
+                                            {% set diff = inventory_differences.get(item.id, 0) %}
+                                            {{ item.current_shift_quantity }}
+                                            {% if diff > 0 %}
+                                                <span class="font-semibold text-green-600">(+{{ diff }})</span>
+                                            {% elif diff < 0 %}
+                                                <span class="font-semibold text-red-600">({{ diff }})</span>
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

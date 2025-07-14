@@ -12,15 +12,41 @@ def acknowledge_eyeent():
     shift_str = request.args.get('shift')
 
     ent_inventory_with_quantities = []
+    inventory_differences = {}
 
     if date_str and shift_str:
         try:
             ack_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
+            # Find previous shift
+            if shift_str == 'AM':
+                prev_shift_date = ack_date - timedelta(days=1)
+                prev_shift_type = 'ND'
+            else:  # ND
+                prev_shift_date = ack_date
+                prev_shift_type = 'AM'
+            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+
             if current_shift_obj:
                 ent_items_query = Inventory.query.filter(or_(Inventory.groupid==1, Inventory.groupid==2)).order_by(Inventory.id).all() 
                 ent_inventory_with_quantities = ShiftInventory.get_inventory_with_quantities(current_shift_obj.id, ent_items_query)
+
+                # Get current shift inventory
+                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
+                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+
+                # Get previous shift inventory
+                prev_inventory_map = {}
+                if prev_shift_obj:
+                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
+                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+
+                # Calculate differences
+                for inventory_id, curr_qty in current_inventory_map.items():
+                    prev_qty = prev_inventory_map.get(inventory_id, 0)
+                    inventory_differences[inventory_id] = curr_qty - prev_qty
+
             else:
                 flash(f"Shift details not found for {date_str} - {shift_str}.", "warning")
         except ValueError:
@@ -30,24 +56,51 @@ def acknowledge_eyeent():
         return redirect(url_for('p3_checklist'))
 
     return render_template('acknowledge_eyeent.html', date=date_str, shift=shift_str, 
-                           ent_inventory=ent_inventory_with_quantities)
+                           ent_inventory=ent_inventory_with_quantities,
+                           inventory_differences=inventory_differences)
 
 @acknowledge_bp.route('/acknowledge_dental', methods=['POST'])
 def acknowledge_dental():
     date_str = request.form.get('date')
     shift_str = request.form.get('shift')
 
-    users = User.query.order_by(User.username).all() # Needed for the form on this page
+    users = User.query.order_by(User.username).all()
     dental_inventory_with_quantities = []
+    inventory_differences = {}
 
     if date_str and shift_str:
         try:
             ack_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
+            # Find previous shift
+            if shift_str == 'AM':
+                prev_shift_date = ack_date - timedelta(days=1)
+                prev_shift_type = 'ND'
+            else:  # ND
+                prev_shift_date = ack_date
+                prev_shift_type = 'AM'
+            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+
             if current_shift_obj:
                 dental_items_query = Inventory.query.filter_by(groupid=3).order_by(Inventory.id).all() 
                 dental_inventory_with_quantities = ShiftInventory.get_inventory_with_quantities(current_shift_obj.id, dental_items_query)
+
+                # Get current shift inventory
+                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
+                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+
+                # Get previous shift inventory
+                prev_inventory_map = {}
+                if prev_shift_obj:
+                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
+                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+
+                # Calculate differences
+                for inventory_id, curr_qty in current_inventory_map.items():
+                    prev_qty = prev_inventory_map.get(inventory_id, 0)
+                    inventory_differences[inventory_id] = curr_qty - prev_qty
+
             else:
                 flash(f"Shift details not found for {date_str} - {shift_str}.", "warning")
         except ValueError:
@@ -57,7 +110,8 @@ def acknowledge_dental():
         return redirect(url_for('p3_checklist'))
 
     return render_template('acknowledge_dental.html', date=date_str, shift=shift_str, 
-                           users=users, dental_inventory=dental_inventory_with_quantities)
+                           users=users, dental_inventory=dental_inventory_with_quantities,
+                           inventory_differences=inventory_differences)
 
 @acknowledge_bp.route('/submit_acknowledgement', methods=['POST'])
 def submit_acknowledgement():
@@ -139,6 +193,8 @@ def acknowledge_view():
                 for inventory_id, curr_qty in current_inventory_map.items():
                     prev_qty = prev_inventory_map.get(inventory_id, 0)
                     inventory_differences[inventory_id] = curr_qty - prev_qty
+
+                print(inventory_differences)
 
                 inventory_alias = aliased(Inventory)
                 inventory_group_query = Group.query.outerjoin(
