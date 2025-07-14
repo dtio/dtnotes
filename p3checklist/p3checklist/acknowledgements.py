@@ -102,25 +102,50 @@ def acknowledge_view():
     date_str = request.args.get('date')
     shift_str = request.args.get('shift')
     inventory_group_with_quantities = []
-    acknowledger_name = "N/A" 
+    acknowledger_name = "N/A"
+    inventory_differences = {}
 
     if date_str and shift_str:
         try:
             ack_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             current_shift_obj = Shift.query.filter_by(date=ack_date, shift=shift_str).first()
 
+            # Find previous shift
+            if shift_str == 'AM':
+                prev_shift_date = ack_date - timedelta(days=1)
+                prev_shift_type = 'ND'
+            else:  # ND
+                prev_shift_date = ack_date
+                prev_shift_type = 'AM'
+            prev_shift_obj = Shift.query.filter_by(date=prev_shift_date, shift=prev_shift_type).first()
+
             if current_shift_obj:
                 if current_shift_obj.acknowledged_by:
                     user = User.query.get(current_shift_obj.acknowledged_by)
                     if user:
                         acknowledger_name = user.username
-                
-                inventory_alias = aliased(Inventory) 
+
+                # Get current shift inventory
+                current_inventory = ShiftInventory.query.filter_by(shift_id=current_shift_obj.id).all()
+                current_inventory_map = {inv.inventory_id: inv.quantity for inv in current_inventory}
+
+                # Get previous shift inventory
+                prev_inventory_map = {}
+                if prev_shift_obj:
+                    prev_inventory = ShiftInventory.query.filter_by(shift_id=prev_shift_obj.id).all()
+                    prev_inventory_map = {inv.inventory_id: inv.quantity for inv in prev_inventory}
+
+                # Calculate differences
+                for inventory_id, curr_qty in current_inventory_map.items():
+                    prev_qty = prev_inventory_map.get(inventory_id, 0)
+                    inventory_differences[inventory_id] = curr_qty - prev_qty
+
+                inventory_alias = aliased(Inventory)
                 inventory_group_query = Group.query.outerjoin(
-                    inventory_alias, 
-                    Group.id == inventory_alias.groupid 
+                    inventory_alias,
+                    Group.id == inventory_alias.groupid
                 ).options(
-                    contains_eager(Group.inventories, alias=inventory_alias) 
+                    contains_eager(Group.inventories, alias=inventory_alias)
                 ).order_by(Group.id, inventory_alias.id)
                 inventory_group_result = inventory_group_query.all()
                 for group in inventory_group_result:
@@ -132,9 +157,10 @@ def acknowledge_view():
         except ValueError:
             flash("Invalid date format provided.", "error")
     else:
-        flash("Date and Shift are required to view item acknowledgements.", "warning") # Corrected message
-        return redirect(url_for('p3_checklist')) 
+        flash("Date and Shift are required to view item acknowledgements.", "warning")
+        return redirect(url_for('p3_checklist'))
 
-    return render_template('acknowledge_view.html', date=date_str, shift=shift_str, 
-                           inventory_group=inventory_group_with_quantities, 
-                           acknowledge_by=acknowledger_name)
+    return render_template('acknowledge_view.html', date=date_str, shift=shift_str,
+                           inventory_group=inventory_group_with_quantities,
+                           acknowledge_by=acknowledger_name,
+                           inventory_differences=inventory_differences)
