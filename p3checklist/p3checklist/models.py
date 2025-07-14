@@ -48,7 +48,8 @@ class Inventory(db.Model):
     notes = db.Column(Text, nullable=True)
     groupid = db.Column(Integer, ForeignKey('groups.id'), nullable=False)
     location = db.Column(Text, nullable=False)
-    frequently_used = db.Column(Boolean, nullable=False, default=False) 
+    frequently_used = db.Column(Boolean, nullable=False, default=False)
+    parquantity = db.Column(Integer, nullable=False) 
     
     # Relationship to ShiftInventory logs
     shift_logs = db.relationship('ShiftInventory', backref='item_details', lazy='dynamic')
