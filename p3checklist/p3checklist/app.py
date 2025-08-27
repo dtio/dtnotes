@@ -7,6 +7,7 @@ from .models import db, Shift, User, Group, Inventory, ShiftInventory
 import os
 from .acknowledgements import acknowledge_bp 
 from .checkout import checkout_bp
+from .scheduler import init_scheduler
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://p3checkuser:p3checkpass@p3cldb.p3cl.svc.cluster.local/p3checklist')
@@ -19,36 +20,13 @@ migrate = Migrate(app, db)
 app.register_blueprint(acknowledge_bp) 
 app.register_blueprint(checkout_bp)
 
-def add_todays_data():
-    """
-    Adds today's AM and PM shifts to the database if they don't already exist.
-    """
-    today = date.today()
-    try:
-        # Check if today's AM shift exists
-        am_shift = Shift.query.filter_by(date=today, shift='AM').first()
-        if not am_shift:
-            new_am_shift = Shift(date=today, shift='AM')
-            db.session.add(new_am_shift)
-            app.logger.info("Added AM shift for today: %s", today)
+# Initialize scheduler for background tasks
+init_scheduler(app)
 
-        # Check if today's ND shift exists
-        nd_shift = Shift.query.filter_by(date=today, shift='ND').first()
-        if not nd_shift:
-            new_nd_shift = Shift(date=today, shift='ND')
-            db.session.add(new_nd_shift)
-            app.logger.info("Added ND shift for today: %s", today)
-
-        db.session.commit()  # Commit the session
-
-    except exc.IntegrityError:
-        db.session.rollback()
-        app.logger.info("Attempted to add today's data, but it already exists for date: %s", today)
-
+# add_todays_data() moved to scheduler.py
 
 @app.route('/')
 def p3_checklist():
-    add_todays_data()  # Call the function to add today's data
     today = datetime.now()
     ten_days_ago = today - timedelta(days=10)
 

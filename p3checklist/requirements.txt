@@ -1,3 +1,5 @@
-Flask
-Flask-SQLAlchemy
-psycopg2-binary
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+psycopg2-binary==2.9.7
+APScheduler==3.10.4
