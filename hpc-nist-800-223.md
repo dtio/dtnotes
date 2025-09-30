@@ -24,6 +24,7 @@ Management Zone:
 
 - MFA for Access Zone
 - File system encryption 
+
 - Granular data access
 
 
