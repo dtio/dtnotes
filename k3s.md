@@ -1,5 +1,95 @@
 curl -sfL https://get.k3s.io | sh -
 
+For pi
+/boot/firmware/cmdline.txt
+/boot/cmdline.txt
+
+cgroup_memory=1 cgroup_enable=memory 
+reboot
+
+
+sudo cp /etc/rancher/k3s/k3s.yaml .kube/config
+sudo chown ansible:ansible .kube/config
+export KUBECONFIG=~/.kube/config
+kubectl get nodes -o wide
+
+k3s-uninstall.sh
+
+curl -sfL https://get.k3s.io |INSTALL_K3S_EXEC="--disable=servicelb" sh -
+
+II - First Containers and Essential Networking
+
+cat /etc/profile.d/kube.sh 
+#!/bin/sh
+
+alias k='kubectl'
+export KUBECONFIG=~/.kube/config
+
+davidtio/tsnginx:0.1
+
+
+First Container
+
+Namespace
+Pod (Container)
+Service 
+Ingress
+
+PodNetwork
+ServiceNetwork - <name>.<namespace>.<svc>.cluster.local 
+k get svc -n kube-system
+nslookup
+server 10.43.0.10
+
+LoadBalancerNetwork
+IngressController -> HTTP HTTPS traffics
+
+cat /run/flannel/subnet.env
+kubectl get service kubernetes
+kubectl get services -A | grep "LoadBalancer"
+
+# Setup MetalLB
+
+# Helm installation
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+
+# Adding helm repositories
+
+helm repo add metallb https://metallb.github.io/metallb
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+
+helm install metallb metallb/metallb --namespace metallb --create-namespace
+
+metallb-pool.yaml
+
+# Metallb address pool
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: cluster-pool
+  namespace: metallb
+spec:
+  addresses:
+  - 192.168.18.50-192.168.18.59
+
+---
+# L2 configuration
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: metallb-k3s
+  namespace: metallb
+spec:
+  ipAddressPools:
+  - cluster-pool
+
+
+
 ip a add 192.168.18.40/24 dev ens33
 
 curl -sfL https://get.k3s.io | K3S_URL=https://k3s.transcend.local:6443 K3S_TOKEN=K101c2e36316ffb0dacd89bf7dcb8b19474ef164aa9bf8821e7d809c26d2dd5576d::server:2a330108332ca3320cbbd3aa1a5ca6bd sh -
@@ -196,30 +286,7 @@ cp /etc/rancher/k3s/k3s.yaml .kube/config
 
 helm repo add metallb https://metallb.github.io/metallb
 
-helm install metallb metallb/metallb --namespace metallb --create-namespace
 
-metallb-pool.yaml
-
-# Metallb address pool
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: cluster-pool
-  namespace: metallb
-spec:
-  addresses:
-  - 192.168.18.50-192.168.18.59
-
----
-# L2 configuration
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: metallb-k3s
-  namespace: metallb
-spec:
-  ipAddressPools:
-  - cluster-pool
 
 # Labelling worker nodes
 
@@ -413,3 +480,13 @@ workload.user.cattle.io/workloadselector: apps.deployment-demo-hellorancher
 Rafay API key
 
 ra2.f27f8f06b5b5508877c8bddc51ac8b8531d92e54.03cb778b5ecc0c6de963e133b65d2ab65e71d34f680e9e46a779981ddda0310b
+
+# Simple mkcert
+
+mkcert rpi01.app '*.rpi01.app'
+cp ~/.local/share/mkcert/rootCA.pem .
+
+copy rootCA.pem to linux server that need to trust the cert
+
+sudo cp rootCA.pem /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust extract

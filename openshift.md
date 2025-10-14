@@ -17,3 +17,11 @@ INFO[2025-06-05 11:56:23] Quay is available at https://tsbastion01.transcend.loc
     Login Succeeded!
 
 https://docs.redhat.com/en/documentation/openshift_container_platform/4.14/html/disconnected_installation_mirroring/installing-mirroring-installation-images
+
+# vCenter CA Trust
+
+curl -k -O https://tsvcenter.transcend.local/certs/download.zip
+unzip download.zip
+sudo cp certs/lin/* /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust extract
+
