@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Certificate Authority - Tioca</title>
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h2>Create Certificate Authority</h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('create_ca') }}" method="post">
+                            <div class="mb-3">
+                                <label for="common_name" class="form-label">CA Name *</label>
+                                <input type="text" class="form-control" id="common_name" name="common_name" placeholder="tioCA" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="country" class="form-label">Country (2-letter code)</label>
+                                    <input class="form-control" id="country" name="country" maxlength="2" placeholder="SG" list="country-codes">
+                                    <datalist id="country-codes">
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="FR">France</option>
+                                        <option value="JP">Japan</option>
+                                        <option value="CN">China</option>
+                                        <option value="IN">India</option>
+                                        <option value="SG">Singapore</option>
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="organization" class="form-label">Organization</label>
+                                    <input type="text" class="form-control" id="organization" name="organization" placeholder="Tio Company">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="validity_days" class="form-label">Validity (days)</label>
+                                <input type="number" class="form-control" id="validity_days" name="validity_days" value="3650" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Generate CA</button>
+                            <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Certificate - {{ cert_name }}</title>
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <div class="container mt-5 mb-5">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="m-0">Certificate Details: {{ cert_name }}</h2>
+                {% if ca_filename %}
+                    <a href="{{ url_for('manage_ca', ca_filename=ca_filename) }}" class="btn btn-secondary">Back to Manage CA</a>
+                {% else %}
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to CA List</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <pre class="bg-dark text-light p-3 rounded"><code>{{ cert_details }}</code></pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

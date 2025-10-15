@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tioca</title>
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        /* A little custom style to center the content */
+        html, body {
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center bg-light">
+    <div class="container p-5 bg-white rounded shadow-sm" style="max-width: 800px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category or 'info' }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="m-0">tioCA</h1>
+            <a href="{{ url_for('create_ca') }}" id="create-ca-btn" class="btn btn-primary">Create New CA</a>
+        </div>
+
+        {% if cas %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">CA Name</th>
+                        <th scope="col">Expiry Date</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ca in cas %}
+                    <tr>
+                        <td class="fw-bold"><a href="{{ url_for('view_ca', filename=ca.filename) }}" class="text-decoration-none">{{ ca.name }}</a></td>
+                        <td>{{ ca.expiry.strftime('%d %b %Y') }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('manage_ca', ca_filename=ca.filename) }}" class="btn btn-sm btn-primary">Manage</a>
+                            <a href="{{ url_for('download_ca', filename=ca.filename) }}" class="btn btn-sm btn-outline-secondary ms-1">Download CA</a>
+                            <form action="{{ url_for('delete_ca', ca_filename=ca.filename) }}" method="post" class="d-inline ms-1" onsubmit="return confirm('Are you sure you want to delete this CA and all its signed certificates?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center p-4 border rounded bg-light">
+                <p class="mb-0">No Certificate Authorities have been created yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
