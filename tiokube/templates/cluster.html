@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage {{ cluster.name }} - tioKube</title>
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+
+    <div class="container">
+        <div class="py-5">
+            <a href="/" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back to Dashboard</a>
+            <h1 class="display-5 fw-bold">Manage Cluster: {{ cluster.name }}</h1>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Input for adding a new node -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="hostnameInput" class="form-control form-control-lg" placeholder="Enter hostname to add...">
+                            <button class="btn btn-primary" type="button" id="addNodeBtn">Add Node</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table to display nodes -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h3 class="mb-0">Nodes</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Node Name</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Command</th>
+                                    <th scope="col" class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nodeTableBody">
+                                <!-- Node rows are rendered by Jinja and can be added/removed by JS -->
+                                {% for node in cluster.nodes %}
+                                <tr id="node-row-{{ node.id }}">
+                                    <td>{{ node.hostname }}</td>
+                                    <td>
+                                        {% set status_class = 'bg-secondary' %}
+                                        {% if node.status == 'Ready' %}
+                                            {% set status_class = 'bg-success' %}
+                                        {% elif node.status == 'Failed' %}
+                                            {% set status_class = 'bg-danger' %}
+                                        {% endif %}
+                                        <span class="badge {{ status_class }}">
+                                            {{ node.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if node.status == 'Ready' %}
+                                            <code id="init-command-{{ node.id }}">kubeadm init --pod-network-cidr=172.18.0.0/16 --control-plane-endpoint "{{ node.hostname }}:6443"</code>
+                                            <button class="btn btn-sm btn-outline-secondary py-0" onclick="copyCommand('init-command-{{ node.id }}', this)">Copy</button>
+                                        {% else %}
+                                            <code id="command-{{ node.id }}">curl http://{{ app_host }}/api/cluster/{{ cluster.name }}/{{ node.hostname }} | sudo bash</code>
+                                            <button class="btn btn-sm btn-outline-secondary py-0" onclick="copyCommand('command-{{ node.id }}', this)">Copy</button>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-danger btn-sm" onclick="removeNode({{ node.id }})">Delete</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Optional: Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script>
+        const CLUSTER_ID = {{ cluster.id }};
+        const APP_HOST = '{{ app_host }}';
+        const CLUSTER_NAME = '{{ cluster.name }}';
+
+        async function addNode() {
+            const hostnameInput = document.getElementById('hostnameInput');
+            const hostname = hostnameInput.value.trim();
+
+            if (hostname && CLUSTER_NAME) {
+                const response = await fetch(`/api/clusters/${CLUSTER_ID}/nodes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hostname: hostname })
+                });
+                const newNode = await response.json();
+                
+                const tableBody = document.getElementById('nodeTableBody');
+                const newRow = tableBody.insertRow();
+                newRow.id = `node-row-${newNode.id}`;
+                newRow.innerHTML = `
+                    <td>${newNode.hostname}</td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            ${newNode.status}
+                        </span>
+                    </td>
+                    <td>
+                        <!-- New nodes are never 'Ready' initially, so we only need the provisioning command -->
+                        <div>
+                            <code id="command-${newNode.id}">curl http://${APP_HOST}/api/cluster/${CLUSTER_NAME}/${newNode.hostname} | sudo bash</code>
+                            <button class="btn btn-sm btn-outline-secondary py-0" onclick="copyCommand('command-${newNode.id}', this)">Copy</button>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-danger btn-sm" onclick="removeNode(${newNode.id})">Delete</button>
+                    </td>
+                `;
+                hostnameInput.value = '';
+            }
+        }
+
+        async function removeNode(nodeId) {
+            await fetch(`/api/nodes/${nodeId}`, { method: 'DELETE' });
+            document.getElementById(`node-row-${nodeId}`).remove();
+        }
+
+        function copyCommand(elementId, button) {
+            const commandText = document.getElementById(elementId).textContent.trim();
+            const originalButtonText = button.textContent;
+
+            const showSuccess = () => {
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalButtonText;
+                }, 2000);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                // Modern async clipboard API (for HTTPS/localhost)
+                navigator.clipboard.writeText(commandText).then(showSuccess, (err) => {
+                    console.error('Could not copy text: ', err);
+                });
+            } else {
+                // Fallback for older browsers or non-secure contexts (HTTP)
+                const textArea = document.createElement("textarea");
+                textArea.value = commandText;
+                
+                // Make the textarea out of sight
+                textArea.style.position = "fixed";
+                textArea.style.top = "-9999px";
+                textArea.style.left = "-9999px";
+
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    if (document.execCommand('copy')) {
+                        showSuccess();
+                    }
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                }
+
+                document.body.removeChild(textArea);
+            }
+        }
+
+        document.getElementById('addNodeBtn').addEventListener('click', addNode);
+    </script>
+</body>
+</html>

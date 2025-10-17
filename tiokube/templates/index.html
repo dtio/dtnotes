@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tioKube Dashboard</title>
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+
+    <div class="container">
+        <div class="py-5 text-center">
+            <h1 class="display-5 fw-bold">tioKube Dashboard</h1>
+        </div>
+
+        <!-- Step 1: Create Cluster Section -->
+        <div id="create-cluster-section">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header"><h3 class="mb-0">Create New Cluster</h3></div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="clusterNameInput" class="form-label">Cluster Name</label>
+                                <input type="text" id="clusterNameInput" class="form-control form-control-lg" placeholder="Enter cluster name...">
+                            </div>
+                            <div class="d-grid">
+                                <button class="btn btn-primary" type="button" id="createClusterBtn">Create Cluster</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clusters List Section -->
+        <div id="clusters-list-section">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h3 class="mb-0">Clusters</h3>
+                        </div>
+                        <table class="table table-hover mb-0">
+                            <tbody id="clustersTableBody">
+                                <!-- New cluster rows will be added here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional: Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script>
+        // --- Render Functions ---
+        function renderCluster(cluster) {
+            const newRow = document.createElement('tr');
+            newRow.id = `cluster-row-${cluster.id}`;
+            newRow.innerHTML = `
+                <td colspan="2">
+                    <div class="d-flex justify-content-between align-items-center p-2">
+                        <strong class="fs-5">${cluster.name} (${cluster.nodes.length} nodes)</strong>
+                        <div>
+                            <a href="/cluster/${cluster.id}" class="btn btn-secondary btn-sm">
+                                Manage Nodes
+                            </a>
+                            <button class="btn btn-danger btn-sm" onclick="removeCluster(${cluster.id})">
+                                Remove Cluster
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            `;
+            return newRow;
+        }
+
+        // --- API Functions ---
+        async function createCluster() {
+            const clusterNameInput = document.getElementById('clusterNameInput');
+            const clusterName = clusterNameInput.value.trim();
+
+            if (clusterName) {
+                const response = await fetch('/api/clusters', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: clusterName })
+                });
+                const newCluster = await response.json();
+                document.getElementById('clustersTableBody').appendChild(renderCluster(newCluster));
+                clusterNameInput.value = '';
+            }
+        }
+
+        async function removeCluster(clusterId) {
+            await fetch(`/api/clusters/${clusterId}`, { method: 'DELETE' });
+            document.getElementById(`cluster-row-${clusterId}`).remove();
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('createClusterBtn').addEventListener('click', createCluster);
+
+            const response = await fetch('/api/clusters');
+            const clusters = await response.json();
+            const tableBody = document.getElementById('clustersTableBody');
+            clusters.forEach(cluster => tableBody.appendChild(renderCluster(cluster)));
+        });
+    </script>
+</body>
+</html>
